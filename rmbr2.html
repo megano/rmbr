@@ -2,7 +2,10 @@
 
 <html>
   <head>
-    <title>Example</title>
+    <title>rmbr the face and name memory game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/reset.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
   </head>
   <body>
     <!-- Load the Facebook JavaScript SDK -->
@@ -36,35 +39,68 @@
        // do what you would like here
     }
 
-      // Check if the current user is logged in and has authorized the app
-      FB.getLoginStatus(checkLoginStatus);
+    // Check if the current user is logged in and has authorized the app
+    FB.getLoginStatus(checkLoginStatus);
 
-      // Login in the current user via Facebook and ask for email permission
-      function authUser() {
-        FB.login(checkLoginStatus, {scope:'email'});
+    // Login in the current user via Facebook and ask for email permission
+    function authUser() {
+      FB.login(checkLoginStatus, {scope:'email'});
+    }
+
+    // Check the result of the user status and display login button if necessary
+    function checkLoginStatus(response) {
+      if(response && response.status == 'connected') {
+
+        //alert('User is authorized');
+
+        // Hide the login button
+        document.getElementById('loginButton').style.display = 'none';
+
+        // Now Personalize the User Experience
+        console.log('Access Token: ' + response.authResponse.accessToken);
+        var accessToken = response.authResponse.accessToken;
+        at = accessToken;
+        fql_query();
+      } else {
+      
+        alert('Please authorize the app');
+
+        // Display the login button
+        document.getElementById('loginButton').style.display = 'block';
+      }
+    }
+
+    // Run a function called FQL Query that gets friend's photos and names
+    fql_query = function() {
+
+      FB.api("https://graph.facebook.com/me/friends?fields=picture.type(large),name", function(response) {
+        console.log(response.data);
+        thumbnails(response.data);
+      });;
+
+    }
+
+    // Toggle the yes class on elements. Used to choose friend's photos to display.
+    yes_toggle = function(t) { $(t).find('a').toggleClass( 'yes' );  }
+
+    // Generate friend thumbnails for friend selection
+    thumbnails = function(d) {
+      $('#friends').show();
+      $('#calendars').hide();
+
+      console.log('got '+d.length+' friend\'s faces to remember')
+
+      for(var i=0; i<d.length; i++) {
+        var friend = d[i];
+        $('#board').append($('<div class="tile" onclick="yes_toggle(this);" />').html('<a href="#" class="thumbnail yes" onclick="return false;" data-name="'+friend.name+'" data-pic="'+friend.picture.data.url+'"><img class="profile" src="'+friend.picture.data.url+'" alt="'+friend.name+'" /> '+ friend.name+'</a>'))
       }
 
-      // Check the result of the user status and display login button if necessary
-      function checkLoginStatus(response) {
-        if(response && response.status == 'connected') {
-
-          alert('User is authorized');
-
-          // Hide the login button
-          document.getElementById('loginButton').style.display = 'none';
-
-          // Now Personalize the User Experience
-          console.log('Access Token: ' + response.authResponse.accessToken);
-        } else {
-        
-          alert('Please authorize the app');
-
-          // Display the login button
-          document.getElementById('loginButton').style.display = 'block';
-        }
-      }
+    }
     </script>
 
     <input id="loginButton" type="button" value="Login!" onclick="authUser();" />
+  <div id="board">
+      
+  </div>
   </body>
 </html>
